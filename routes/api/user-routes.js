@@ -91,3 +91,5 @@ router.delete('/:id', (req, res) => {    //To delete data, use the .destroy() me
             res.status(500).json(err);
         });
 });
+
+module.exports = router;
