@@ -1,6 +1,6 @@
 const router = require('express').Router();
 const res = require('express/lib/response');
-const { Post, User } = require('../../models');
+const { Post, User, Vote } = require('../../models');
 
 //get all users 
 router.get('/', (req, res) => {
@@ -61,6 +61,16 @@ router.post('/', (req, res) => {
     })
 })
 
+
+//PUT/api/posts/upvote Make sure this PUT route is defined before the /:id PUT route, though. Otherwise, Express.js will think the word "upvote" is a valid parameter for /:id.
+router.put('/upvote', (req, res) => {
+    Vote.create({
+        user_id: req.body.user_id,
+        post_id: req.body.post_id
+    })
+    .then(dbPostData => res.json(dbPostData))
+    .catch(err => res.json(err));
+});
 
 router.put('/:id', (req, res) => {
     Post.update(
