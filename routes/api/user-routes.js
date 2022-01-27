@@ -1,5 +1,5 @@
 const router = require('express').Router();
-const { User } = require('../../models');
+const { User, Post, Vote } = require('../../models');
 
 //Get all users
 router.get('/', (req, res) => {
@@ -19,11 +19,25 @@ router.get('/', (req, res) => {
 //Get single user 
 router.get('/:id', (req, res) => {
     User.findOne({
+
         attributes: { exclude: ['password'] },
         where: {
             id: req.params.id
-        }
+        },
+        include: [  //So now when we query a single user, we'll receive the title information of every post they've ever voted on.
+            {       //handy for building a front end with a user profile page, as it'll allow us to provide more information for that user
+                model: Post,
+                attributes: ['id', 'title', 'post_url', 'created_at']
+            },
+            {
+                model: Post,        // We had to include the Post model, as we did before; but this time we had to contextualize it by going through the Vote table.
+                attributes: ['title'],
+                through: Vote,      
+                as: 'voted_posts'
+            }
+        ]
     })
+    
         .then(dbUserData => {
             if (!dbUserData) {
                 res.status(404).json({ message: 'No user found with this id' });
