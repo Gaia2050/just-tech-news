@@ -1,11 +1,13 @@
 const router = require('express').Router();
 const res = require('express/lib/response');
-const { Post, User, Vote } = require('../../models');
+const { Post, User, Vote, Comment } = require('../../models');
 const sequelize = require('../../config/connection');
+
 
 //get all users 
 router.get('/', (req, res) => {
     Post.findAll({
+        order: [['created_at', 'DESC']],
         //Query configuration
         attributes:
             ['id',
@@ -14,8 +16,15 @@ router.get('/', (req, res) => {
                 'created_at',
                 [sequelize.literal('(SELECT COUNT(*) FROM vote WHERE post.id = vote.post_id)'), 'vote_count']
             ],
-        order: [['created_at', "DESC"]],
-        include: [   //Notice that the include property is expressed as an array of objects. To define this object, we need a reference to the model and attributes. 
+        include: [
+            {
+                model: Comment,
+                attributes: ['id', 'comment_text', 'post_id', 'user_id', 'created_at'],
+                include: {
+                    model: User,
+                    attributes: ['username']
+                }
+            },
             {
                 model: User,
                 attributes: ['username']
@@ -27,6 +36,7 @@ router.get('/', (req, res) => {
             console.log(err);
             res.status(500).json(err);
         });
+
 });
 
 router.get('/:id', (req, res) => {
@@ -42,6 +52,15 @@ router.get('/:id', (req, res) => {
                 [sequelize.literal('(SELECT COUNT(*) FROM vote WHERE post.id = vote.post_id)'), 'vote_count']
             ],
         include: [
+            // include the Comment model here:
+            {
+                model: Comment,
+                attributes: ['id', 'comment_text', 'post_id', 'user_id', 'created_at'],
+                include: {
+                    model: User,
+                    attributes: ['username']
+                }
+            },              //Notice that the include property is expressed as an array of objects. To define this object, we need a reference to the model and attributes.
             {
                 model: User,
                 attributes: ['username']
@@ -78,12 +97,12 @@ router.post('/', (req, res) => {
 //create the vote---PUT/api/posts/upvote Make sure this PUT route is defined before the /:id PUT route, though. Otherwise, Express.js will think the word "upvote" is a valid parameter for /:id.
 router.put('/upvote', (req, res) => {
     //custom static method created in models/Post.js
-    Post.upvote(req.body. {Vote})
-    .then(updatedPostData => res.json(updatedPostData))
-    .catch(err => {
-        console.log(err);
-        res.status(400).json(err);
-    });
+    Post.upvote(req.body. { Vote })
+        .then(updatedPostData => res.json(updatedPostData))
+        .catch(err => {
+            console.log(err);
+            res.status(400).json(err);
+        });
 });
 
 
@@ -119,48 +138,48 @@ router.put('/upvote', (req, res) => {
 //             });
 //     })
 
-    router.put('/:id', (req, res) => {
-        Post.update(
-            {
-                title: req.body.title
-            },
-            {
-                where: {
-                    id: req.params.id
-                }
-            }
-        )
-            .then(dbPostData => {
-                if (!dbPostData) {
-                    res.status(404).json({ message: 'No post found with this id' });
-                    return;
-                }
-                res.json(dbPostData);
-            })
-            .catch(err => {
-                console.log(err);
-                res.status(500).json(err);
-            });
-    });
-
-    router.delete('/:id', (req, res) => {
-        Post.destroy({
+router.put('/:id', (req, res) => {
+    Post.update(
+        {
+            title: req.body.title
+        },
+        {
             where: {
                 id: req.params.id
             }
+        }
+    )
+        .then(dbPostData => {
+            if (!dbPostData) {
+                res.status(404).json({ message: 'No post found with this id' });
+                return;
+            }
+            res.json(dbPostData);
         })
-            .then(dbPostData => {
-                if (!dbPostData) {
-                    res.status(404).json({ massage: 'No post found with this id' });
-                    return;
-                }
-                res.json(dbPostData);
-            })
-            .catch(err => {
-                console.log(err);
-                res.status(500).json(err);
-            });
-    });
+        .catch(err => {
+            console.log(err);
+            res.status(500).json(err);
+        });
+});
+
+router.delete('/:id', (req, res) => {
+    Post.destroy({
+        where: {
+            id: req.params.id
+        }
+    })
+        .then(dbPostData => {
+            if (!dbPostData) {
+                res.status(404).json({ massage: 'No post found with this id' });
+                return;
+            }
+            res.json(dbPostData);
+        })
+        .catch(err => {
+            console.log(err);
+            res.status(500).json(err);
+        });
+});
 
 
-    module.exports = router;
+module.exports = router;

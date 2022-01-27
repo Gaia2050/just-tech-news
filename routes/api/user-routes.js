@@ -24,20 +24,29 @@ router.get('/:id', (req, res) => {
         where: {
             id: req.params.id
         },
-        include: [  //So now when we query a single user, we'll receive the title information of every post they've ever voted on.
-            {       //handy for building a front end with a user profile page, as it'll allow us to provide more information for that user
+        include: [     //So now when we query a single user, we'll receive the title information of every post they've ever voted on.
+            {          //handy for building a front end with a user profile page, as it'll allow us to provide more information for that user
                 model: Post,
                 attributes: ['id', 'title', 'post_url', 'created_at']
             },
+            // include the Comment model here:
             {
-                model: Post,        // We had to include the Post model, as we did before; but this time we had to contextualize it by going through the Vote table.
+                model: Comment,
+                attributes: ['id', 'comment_text', 'created_at'],
+                include: {
+                    model: Post,
+                    attributes: ['title']
+                }
+            },
+            {
+                model: Post,
                 attributes: ['title'],
-                through: Vote,      
+                through: Vote,
                 as: 'voted_posts'
             }
         ]
     })
-    
+
         .then(dbUserData => {
             if (!dbUserData) {
                 res.status(404).json({ message: 'No user found with this id' });
