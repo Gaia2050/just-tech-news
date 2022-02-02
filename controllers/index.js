@@ -10,10 +10,9 @@ const homeRoutes = require('./home-routes.js');
 // router.use('/users', userRoutes);
 // router.use('/posts', postRoutes);
 router.use('./api', apiRoutes);
+router.use('/', homeRoutes);
 
 router.use((req, res) => {
     res.status(404).end();
 });
-
-router.use('/', homeRoutes);
 module.exports = router;
