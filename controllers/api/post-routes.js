@@ -89,14 +89,17 @@ router.post('/', (req, res) => {
         });
 });
 
-router.put('/upvote', (req, res) => {
-    // custom static method created in models/Post.js
-    Post.upvote({ ...req.body, user_id: req.session.user_id }, { Vote, Comment, User })
-        .then(updatedVoteData => res.json(updatedVoteData))
+router.put('/upvote', (req,res) => {   //We're doing two things here. First, we're checking that a session exists before we even touch the database. Then if a session does exist, we're using the saved user_id property on the session to insert a new record in the vote table.
+    //make the session exist first 
+    if (req.session) {
+        //pass session id along with all destructured properties on req.body
+        Post.upvote({...req.body, user_id: req.session.user_id}, {Vote, Comment, User})
+        .then(updateVoteData => res.json(updateVoteData))
         .catch(err => {
             console.log(err);
             res.status(500).json(err);
         });
+    }
 });
 
 router.put('/:id', (req, res) => {
